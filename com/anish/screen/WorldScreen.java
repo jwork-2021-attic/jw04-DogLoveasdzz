@@ -2,8 +2,9 @@ package com.anish.screen;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.util.Random;
 
-import com.anish.calabashbros.BubbleSorter;
+import com.anish.calabashbros.QuickSorter;
 import com.anish.calabashbros.Calabash;
 import com.anish.calabashbros.World;
 
@@ -12,14 +13,18 @@ import asciiPanel.AsciiPanel;
 public class WorldScreen implements Screen {
 
     private World world;
-    private Calabash[] bros;
+    private Calabash[][] bros;
     String[] sortSteps;
 
     public WorldScreen() {
         world = new World();
 
-        bros = new Calabash[7];
-
+        bros = new Calabash[16][];
+        for (int i = 0; i < 16; i++){
+            bros[i] = new Calabash[16];
+        }
+        
+        /*
         bros[3] = new Calabash(new Color(204, 0, 0), 1, world);
         bros[5] = new Calabash(new Color(255, 165, 0), 2, world);
         bros[1] = new Calabash(new Color(252, 233, 79), 3, world);
@@ -27,7 +32,28 @@ public class WorldScreen implements Screen {
         bros[4] = new Calabash(new Color(50, 175, 255), 5, world);
         bros[6] = new Calabash(new Color(114, 159, 207), 6, world);
         bros[2] = new Calabash(new Color(173, 127, 168), 7, world);
+        */
 
+        for (int i = 0; i < 16; i++){
+            for (int j = 0; j < 16; j++){
+                int rank = i * 16 + j;
+                bros[i][j] = new Calabash(new Color(rank, 255 - rank, 255), rank, world);
+            }
+        }
+
+
+        Random r = new Random();
+        for (int i = 0; i < 8000; i++){
+            int firstRandX = r.nextInt(16);
+            int firstRandY = r.nextInt(16);
+            int secondRandX = r.nextInt(16);
+            int secondRandY = r.nextInt(16);
+            Calabash temp = bros[firstRandX][firstRandY];
+            bros[firstRandX][firstRandY] = bros[secondRandX][secondRandY];
+            bros[secondRandX][secondRandY] = temp;
+        }
+
+        /*
         world.put(bros[0], 10, 10);
         world.put(bros[1], 12, 10);
         world.put(bros[2], 14, 10);
@@ -35,8 +61,15 @@ public class WorldScreen implements Screen {
         world.put(bros[4], 18, 10);
         world.put(bros[5], 20, 10);
         world.put(bros[6], 22, 10);
+        */
 
-        BubbleSorter<Calabash> b = new BubbleSorter<>();
+        for (int i = 0; i < 16; i++){
+            for (int j = 0; j < 16; j++) {
+                world.put(bros[i][j], 4 + i * 2, 4 + j * 2);
+            }
+        }
+
+        QuickSorter<Calabash> b = new QuickSorter<>();
         b.load(bros);
         b.sort();
 
@@ -47,15 +80,17 @@ public class WorldScreen implements Screen {
         return plan.split("\n");
     }
 
-    private void execute(Calabash[] bros, String step) {
+    private void execute(Calabash[][] bros, String step) {
         String[] couple = step.split("<->");
         getBroByRank(bros, Integer.parseInt(couple[0])).swap(getBroByRank(bros, Integer.parseInt(couple[1])));
     }
 
-    private Calabash getBroByRank(Calabash[] bros, int rank) {
-        for (Calabash bro : bros) {
-            if (bro.getRank() == rank) {
-                return bro;
+    private Calabash getBroByRank(Calabash[][] bros, int rank) {
+        for (Calabash[] bro : bros) {
+            for (Calabash b : bro) {
+                if (b.getRank() == rank) {
+                    return b;
+                }
             }
         }
         return null;
