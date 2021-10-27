@@ -3,21 +3,29 @@ package com.anish.screen;
 import java.awt.Color;
 import java.awt.event.KeyEvent;
 
-import com.anish.calabashbros.BubbleSorter;
 import com.anish.calabashbros.Calabash;
 import com.anish.calabashbros.World;
+import com.anish.maze.MazeGenerator;
+import com.anish.calabashbros.Wall;
+import com.anish.calabashbros.Floor;
+import com.anish.calabashbros.Thing;
+import com.anish.maze.MazeSolver;
 
 import asciiPanel.AsciiPanel;
 
 public class WorldScreen implements Screen {
 
     private World world;
-    private Calabash[] bros;
+    private Thing[][] bros;
+    private int[][] maze;
+    Calabash calabash;
+    MazeGenerator mazeGenerator;
+    MazeSolver mazeSolver;
     String[] sortSteps;
 
     public WorldScreen() {
         world = new World();
-
+        /*
         bros = new Calabash[7];
 
         bros[3] = new Calabash(new Color(204, 0, 0), 1, world);
@@ -39,26 +47,46 @@ public class WorldScreen implements Screen {
         BubbleSorter<Calabash> b = new BubbleSorter<>();
         b.load(bros);
         b.sort();
+        */
 
-        sortSteps = this.parsePlan(b.getPlan());
+        mazeGenerator = new MazeGenerator(40);
+        mazeGenerator.generateMaze();
+        maze = mazeGenerator.getMaze();
+        bros = new Thing[maze.length][maze[0].length];
+        for(int i = 0; i < bros.length; i++){
+            for(int j = 0; j < bros[0].length; j++){
+                if (maze[i][j] == 0){
+                    bros[i][j] = new Wall(world);
+                }
+                else{
+                    bros[i][j] = new Floor(world);
+                }
+                world.put(bros[i][j], i, j);
+            }
+        }
+
+        calabash = new Calabash(new Color(255, 165, 0), 0, world);
+        bros[0][0] = calabash;
+        world.put(bros[0][0], 0, 0);
+
+        mazeSolver = new MazeSolver(maze);
+
+        sortSteps = this.parsePlan(mazeSolver.getSolution());
     }
 
     private String[] parsePlan(String plan) {
         return plan.split("\n");
     }
 
-    private void execute(Calabash[] bros, String step) {
-        String[] couple = step.split("<->");
-        getBroByRank(bros, Integer.parseInt(couple[0])).swap(getBroByRank(bros, Integer.parseInt(couple[1])));
-    }
-
-    private Calabash getBroByRank(Calabash[] bros, int rank) {
-        for (Calabash bro : bros) {
-            if (bro.getRank() == rank) {
-                return bro;
-            }
-        }
-        return null;
+    private void execute(Thing[][] bros, String step) {
+        String[] couple = step.split(",");
+        int preI = calabash.getX();
+        int preJ = calabash.getY();
+        int nextI = Integer.parseInt(couple[0]);
+        int nextJ = Integer.parseInt(couple[1]);
+        calabash.moveTo(nextI, nextJ);
+        bros[preI][preJ] = new Floor(world);
+        world.put(bros[preI][preJ], preI, preJ);
     }
 
     @Override
